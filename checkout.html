@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Checkout | Sparkle Crackers</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo"><span class="emoji">🎆</span> Sparkle Crackers</div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="cart.html" class="cart-link">🛒 Cart <span id="cartCount">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h2 class="section-title">Checkout</h2>
+
+  <div id="checkoutContainer"></div>
+</main>
+
+<footer>
+  🎆 Sparkle Crackers &copy; 2026 — Sample demo website. No real payment or delivery.
+</footer>
+
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script src="ui.js"></script>
+<script>
+  // ===== CONFIGURE THIS =====
+  // Set the seller's WhatsApp number in international format, no + or spaces.
+  // Example for India: "919876543210"
+  const SELLER_WHATSAPP_NUMBER = "919597803405";
+  // ===========================
+
+  const container = document.getElementById("checkoutContainer");
+
+  function render() {
+    const items = getCartDetails();
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="emoji">🧾</span>
+          Your cart is empty. Add some products before checking out.
+          <div style="margin-top:16px;">
+            <a href="index.html" class="btn btn-primary">Browse Products</a>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    const total = getCartTotal();
+
+    const orderRowsHtml = items.map(item => `
+      <div class="order-item-row">
+        <span>${item.product.name} × ${item.qty}</span>
+        <span>${formatRupees(item.lineTotal)}</span>
+      </div>
+    `).join("");
+
+    container.innerHTML = `
+      <div class="checkout-grid">
+        <div class="form-card">
+          <h3 style="margin-top:0;">Delivery Details</h3>
+          <div class="form-group">
+            <label for="custName">Customer Name</label>
+            <input type="text" id="custName" placeholder="e.g. Rajesh Kumar" />
+            <div class="error-text" id="errName">Please enter your name.</div>
+          </div>
+          <div class="form-group">
+            <label for="custMobile">Mobile Number</label>
+            <input type="tel" id="custMobile" placeholder="e.g. 9876543210" maxlength="10" />
+            <div class="error-text" id="errMobile">Please enter a valid 10-digit mobile number.</div>
+          </div>
+          <div class="form-group">
+            <label for="custAddress">Delivery Address</label>
+            <textarea id="custAddress" placeholder="House no, street, city, pincode"></textarea>
+            <div class="error-text" id="errAddress">Please enter your delivery address.</div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h3 style="margin-top:0;">Order Summary</h3>
+          ${orderRowsHtml}
+          <div class="summary-row total">
+            <span>Total Amount</span>
+            <span>${formatRupees(total)}</span>
+          </div>
+          <button class="btn whatsapp-btn btn-block" style="margin-top:16px;" onclick="confirmOrder()">
+            ✅ Confirm Order via WhatsApp
+          </button>
+          <p style="font-size:0.78rem; color:#888; margin-top:10px;">
+            Clicking confirm will open WhatsApp with your order details pre-filled, ready to send to us.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  function validate() {
+    let valid = true;
+    const name = document.getElementById("custName").value.trim();
+    const mobile = document.getElementById("custMobile").value.trim();
+    const address = document.getElementById("custAddress").value.trim();
+
+    document.getElementById("errName").style.display = "none";
+    document.getElementById("errMobile").style.display = "none";
+    document.getElementById("errAddress").style.display = "none";
+
+    if (!name) {
+      document.getElementById("errName").style.display = "block";
+      valid = false;
+    }
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      document.getElementById("errMobile").style.display = "block";
+      valid = false;
+    }
+    if (!address) {
+      document.getElementById("errAddress").style.display = "block";
+      valid = false;
+    }
+
+    return valid ? { name, mobile, address } : null;
+  }
+
+  function confirmOrder() {
+    const data = validate();
+    if (!data) return;
+
+    const items = getCartDetails();
+    if (items.length === 0) {
+      showToast("Your cart is empty.");
+      return;
+    }
+    const total = getCartTotal();
+
+    let message = `*New Order - Sparkle Crackers*%0A%0A`;
+    message += `*Customer Name:* ${data.name}%0A`;
+    message += `*Mobile Number:* ${data.mobile}%0A`;
+    message += `*Delivery Address:* ${data.address}%0A%0A`;
+    message += `*Order Details:*%0A`;
+
+    items.forEach(item => {
+      message += `- ${item.product.name} | Qty: ${item.qty} | Price: ${formatRupees(item.product.price)} | Subtotal: ${formatRupees(item.lineTotal)}%0A`;
+    });
+
+    message += `%0A*Total Amount: ${formatRupees(total)}*%0A%0AThank you!`;
+
+    const whatsappUrl = `https://wa.me/${SELLER_WHATSAPP_NUMBER}?text=${message}`;
+
+    window.open(whatsappUrl, "_blank");
+
+    // Optionally clear the cart after sending the order
+    clearCart();
+    showToast("Order sent! Cart cleared.");
+    setTimeout(() => { window.location.href = "index.html"; }, 1500);
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sparkle Crackers | Online Shop</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo"><span class="emoji">🎆</span> Sparkle Crackers</div>
+    <nav class="site-nav">
+      <a href="index.html">Home</a>
+      <a href="cart.html" class="cart-link">🛒 Cart <span id="cartCount">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Light Up Your Celebrations 🎇</h1>
+  <p>Quality crackers &amp; fireworks delivered to your doorstep. Order now, pay on delivery.</p>
+</section>
+
+<main>
+  <h2 class="section-title">Our Products</h2>
+
+  <div class="filter-bar" id="filterBar"></div>
+
+  <div class="product-grid" id="productGrid"></div>
+</main>
+
+<footer>
+  🎆 Sparkle Crackers &copy; 2026 — Sample demo website. No real payment or delivery.
+</footer>
+
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script src="ui.js"></script>
+<script>
+  const grid = document.getElementById("productGrid");
+  const filterBar = document.getElementById("filterBar");
+  let activeCategory = "All";
+
+  const categories = ["All", ...new Set(PRODUCTS.map(p => p.category))];
+
+  function renderFilters() {
+    filterBar.innerHTML = categories.map(cat =>
+      `<button data-cat="${cat}" class="${cat === activeCategory ? 'active' : ''}">${cat}</button>`
+    ).join("");
+  }
+
+  function renderProducts() {
+    const list = activeCategory === "All"
+      ? PRODUCTS
+      : PRODUCTS.filter(p => p.category === activeCategory);
+
+    grid.innerHTML = list.map(p => `
+      <div class="product-card" id="card-${p.id}">
+        <img src="${p.img}" alt="${p.name}" />
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <span class="product-name">${p.name}</span>
+          <span class="product-price">${formatRupees(p.price)}</span>
+          <div class="qty-control">
+            <button type="button" onclick="changeQty(${p.id}, -1)">−</button>
+            <input type="number" min="1" value="1" id="qty-${p.id}" />
+            <button type="button" onclick="changeQty(${p.id}, 1)">+</button>
+          </div>
+          <button class="btn btn-primary btn-block" style="margin-top:8px;" onclick="handleAdd(${p.id})">Add to Cart</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function changeQty(id, delta) {
+    const input = document.getElementById(`qty-${id}`);
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + delta);
+    input.value = val;
+  }
+
+  function handleAdd(id) {
+    const input = document.getElementById(`qty-${id}`);
+    const qty = Math.max(1, parseInt(input.value) || 1);
+    addToCart(id, qty);
+    const card = document.getElementById(`card-${id}`);
+    card.classList.add("added-flash");
+    setTimeout(() => card.classList.remove("added-flash"), 400);
+    const product = PRODUCTS.find(p => p.id === id);
+    showToast(`Added ${qty} × ${product.name} to cart`);
+  }
+
+  filterBar.addEventListener("click", (e) => {
+    if (e.target.tagName === "BUTTON") {
+      activeCategory = e.target.dataset.cat;
+      renderFilters();
+      renderProducts();
+    }
+  });
+
+  renderFilters();
+  renderProducts();
+</script>
+</body>
+</html>
